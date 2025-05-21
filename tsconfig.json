@@ -4,8 +4,10 @@
     "declaration": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "module": "esnext",
-    "jsx": "react"
+    "target": "esnext",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "rootDir": "./src"
   },
   "include": [
     "src/**/*.ts",

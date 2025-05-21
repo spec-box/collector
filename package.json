@@ -1,9 +1,12 @@
 {
-  "name": "@gravity-ui/package-example",
+  "name": "@spec-box/spec-collector",
   "version": "0.0.1",
   "description": "",
   "license": "MIT",
   "main": "dist/index.js",
+  "bin": {
+    "spec-collector": "dist/cli.js"
+  },
   "files": [
     "dist"
   ],
@@ -50,5 +53,13 @@
     "*.md": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "@playwright/test": "^1.52.0",
+    "@spec-box/sync": "^1.2.0",
+    "commander": "^13.1.0",
+    "cosmiconfig": "^9.0.0",
+    "stacktrace-parser": "^0.1.11",
+    "yaml": "^2.7.1"
   }
 }
