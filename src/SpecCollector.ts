@@ -1,5 +1,5 @@
 import {existsSync, readFileSync} from 'node:fs';
-import {parse as parsePath} from 'node:path';
+import {parse as parsePath, relative} from 'node:path';
 
 import {parse as parseYaml} from 'yaml';
 
@@ -10,6 +10,7 @@ import type {
     JSONReportSpec,
     JSONReportSuite,
     PathFilter,
+    ProjectData,
 } from './typings';
 
 type Options = {
@@ -38,9 +39,19 @@ export class SpecCollector {
         this.initTagMap();
     }
 
-    loadData = (reportPath: string, emptyTestsYamlPath = './specBoxTests.yml') => {
-        const report = JSON.parse(readFileSync(reportPath, 'utf8')) as JSONReport;
-        this.loadPlaywrightTestMap(report);
+    loadData = (configProjectData: ProjectData) => {
+        const defaultProjectData = {
+            emptyTestsYamlPath: './specBoxTests.yml',
+            rootPath: './',
+        };
+
+        const {jsonReportPath, emptyTestsYamlPath, rootPath} = {
+            ...defaultProjectData,
+            ...configProjectData,
+        };
+
+        const report = JSON.parse(readFileSync(jsonReportPath, 'utf8')) as JSONReport;
+        this.loadPlaywrightTestMap(report, rootPath);
 
         if (existsSync(emptyTestsYamlPath)) {
             const emptyTestsReport = parseYaml(
@@ -139,7 +150,7 @@ export class SpecCollector {
     };
 
     formatFilename = (fileName: string) => {
-        const elementsToRemove = ['.integration', '.test', '.ts', '.tsx'];
+        const elementsToRemove = ['.e2e', '.integration', '.test', '.ts$', '.tsx$'];
 
         const regExp = new RegExp(elementsToRemove.join('|'), 'g');
 
@@ -238,7 +249,7 @@ export class SpecCollector {
         }
     };
 
-    loadPlaywrightTestMap(report: JSONReport) {
+    loadPlaywrightTestMap(report: JSONReport, rootPath: string) {
         const DELIMITER = ' \u203A ';
 
         const suitesStack = [report.suites];
@@ -254,7 +265,9 @@ export class SpecCollector {
                 const suiteName = this.getSuiteName(suite);
 
                 for (const spec of suite.specs) {
-                    const targetSpec = this.pwTestMap[spec.file];
+                    const filePath = relative(rootPath, spec.file);
+
+                    const targetSpec = this.pwTestMap[filePath];
 
                     const suiteNameWithDelimiter = suiteName ? `${suiteName}${DELIMITER}` : '';
                     const currentSpecData = {
@@ -265,7 +278,7 @@ export class SpecCollector {
                     if (targetSpec) {
                         targetSpec.push(currentSpecData);
                     } else {
-                        this.pwTestMap[spec.file] = [currentSpecData];
+                        this.pwTestMap[filePath] = [currentSpecData];
                     }
                 }
 

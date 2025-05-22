@@ -50,6 +50,7 @@ export type ProjectData = {
     jsonReportPath: string;
     configPath: string;
     emptyTestsYamlPath?: string;
+    rootPath?: string;
 };
 
 export type Settings = {

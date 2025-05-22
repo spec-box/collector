@@ -1,15 +1,105 @@
-# @gravity-ui/package-example &middot; [![npm package](https://img.shields.io/npm/v/@gravity-ui/package-example)](https://www.npmjs.com/package/@gravity-ui/package-example) [![CI](https://img.shields.io/github/actions/workflow/status/gravity-ui/package-example/.github/workflows/ci.yml?label=CI&logo=github)](https://github.com/gravity-ui/package-example/actions/workflows/ci.yml?query=branch:main) [![storybook](https://img.shields.io/badge/Storybook-deployed-ff4685)](https://preview.gravity-ui.com/package-example/)
+# @spec-box/collector
 
-This is a template for typical package. 
+## Описание
 
-1. Create a new repository and use this repository as a template.
-2. Replace `package-example` through the whole repository with your name.
-3. Overwrite other things at your desire.
+`@spec-box/ollector` — это инструмент для сбора и анализа спецификаций тестов из файлов тестов Playwright. Он позволяет автоматически создавать структурированные отчеты о тестовых спецификациях, которые можно сохранить в JSON-файл или загрузить на сервер spec-box.
 
-## Install
+## Установка
 
-```shell
-npm install --save-dev @gravity-ui/package-example
+```bash
+npm install @spec-box/collector --save-dev
 ```
 
-## Usage
+или
+
+```bash
+yarn add @spec-box/collector --dev
+```
+
+## Использование
+
+```bash
+# сбор тест кейсов
+npx spec-collector
+
+# сбор тест кейсов с выгрузкой в spec-box
+npx spec-collector -u
+```
+
+### Конфигурация
+
+Создайте файл конфигурации `spec-collector.config.js`, `.spec-collectorrc`, `.spec-collectorrc.json`, `.spec-collectorrc.yaml`, `.spec-collectorrc.yml`, `.spec-collectorrc.js`, в корне вашего проекта.
+
+Минимальная конфигурация
+
+```javascript
+module.exports = {
+  projects: [
+    {
+      jsonReportPath: './test-results/report.json',
+    },
+  ],
+  // host и specBoxProject нужны только для выгрузки
+  host: 'https://your-spec-box-server.com',
+  specBoxProject: 'your-project-name',
+};
+```
+
+Пример полной конфигурации
+
+```javascript
+module.exports = {
+  projects: [
+    {
+      jsonReportPath: './integrations/test-results/report.json',
+      configPath: './integrations/playwright.config.ts',
+      emptyTestsYamlPath: './integrations/specBoxTests.yml',
+      rootPath: './',
+    },
+    {
+      jsonReportPath: './e2e/test-results/report.json',
+      configPath: './e2e/playwright.config.ts',
+      emptyTestsYamlPath: './e2e/specBoxTests.yml',
+      rootPath: './my-test-dir',
+    },
+  ],
+  ignoreFiles: ['setup'],
+  levels: 3,
+  outputFile: './spec-collector-result.json',
+  host: 'https://your-spec-box-server.com',
+  specBoxProject: 'your-project-name',
+};
+```
+
+### Работа со сценариями
+
+Пакет дает возможность хранить в кодовой базе сценарии еще не написанных тестов. Playwright не будет видеть эти тесты и они не будут видны в отчетах. Сценарии могут использоваться для понимание реального тестового покрытия относительно целевого.
+
+```typescript
+import {test as baseTest} from '@playwright/test';
+import {extendTest} from '@spec-box/collector';
+
+// Расширяем базовый тест методом empty
+const test = extendTest(baseTest);
+
+// Определяем пустой тест
+test.empty('Еще не реализованный тест');
+
+// Обычный тест
+test('Обычный тест', async ({page}) => {
+  // ...
+});
+```
+
+## Структура проекта
+
+- `src/cli.ts` - CLI интерфейс
+- `src/index.ts` - Основной модуль
+- `src/SpecCollector.ts` - Класс для сбора спецификаций
+- `src/EmptyTestCollector.ts` - Класс для работы со сценариями
+- `src/generateReport.ts` - Функция для генерации отчетов
+- `src/typings.ts` - Типы данных
+
+## Лицензия
+
+MIT

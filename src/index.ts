@@ -30,13 +30,14 @@ export async function collectSuite(
     });
 
     for (const project of projects) {
-        const {configPath, jsonReportPath, emptyTestsYamlPath} = project;
+        const {configPath} = project;
         console.info('Generate report for', configPath);
         generateReport(configPath);
 
-        collector.loadData(jsonReportPath, emptyTestsYamlPath);
+        collector.loadData(project);
     }
 
+    console.info('Building spec from reports');
     const specs = await collector.buildSpec();
 
     if (!options.upload) {
