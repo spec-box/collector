@@ -33,7 +33,6 @@ export class SpecCollector {
         this.options = options;
 
         this.pwTestMap = {};
-
         this.emptyTestMap = {};
 
         this.initTagMap();
@@ -99,7 +98,7 @@ export class SpecCollector {
         }
 
         return {
-            features: features.slice(0, -24),
+            features: features,
             attributes: this.getProjectAttributes(),
             trees: this.getProjectTrees(),
             metaFilePath: '',
@@ -108,7 +107,7 @@ export class SpecCollector {
 
     // build methods
     getFeatureCode = (path: string) => {
-        return path.replaceAll('/', '_q');
+        return path.replaceAll('/', '_');
     };
 
     getFeatureTitle = (path: string) => {
@@ -283,25 +282,3 @@ export class SpecCollector {
         return suiteHasNoTitle ? '' : suite.title;
     };
 }
-
-// example
-// void (async () => {
-//     const isProd = process.argv[2]?.includes('--prod');
-//
-//     const host = isProd ? 'https://spec-box.yandex-team.ru/api' : 'http://localhost:8080/api';
-//
-//     const pathFilter: PathFilter = (path) => path !== 'setup/ping-base-url.setup.ts';
-//
-//     const collector = new SpecCollector({
-//         reportPath: '../playwright-report/json/results.json',
-//         emptyTestsYamlPath: './specBoxTests.yml',
-//         pathFilter: pathFilter,
-//     });
-//
-//     const projectData = await collector.buildSpec();
-//
-//     await uploadEntities(projectData, {
-//         host,
-//         project: 'tracker',
-//     });
-// })();
