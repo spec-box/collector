@@ -41,19 +41,18 @@ export class SpecCollector {
         this.initTagMap();
     }
 
-    loadData = (configProjectData: ProjectData) => {
+    loadData = (playwrightReport: JSONReport, configProjectData: ProjectData) => {
         const defaultProjectData = {
             emptyTestsYamlPath: './specBoxTests.yml',
             rootPath: './',
         };
 
-        const {jsonReportPath, emptyTestsYamlPath, rootPath} = {
+        const {emptyTestsYamlPath, rootPath} = {
             ...defaultProjectData,
             ...configProjectData,
         };
 
-        const report = JSON.parse(readFileSync(jsonReportPath, 'utf8')) as JSONReport;
-        this.loadPlaywrightTestMap(report, rootPath);
+        this.loadPlaywrightTestMap(playwrightReport, rootPath);
 
         if (existsSync(emptyTestsYamlPath)) {
             const emptyTestsReport = parseYaml(

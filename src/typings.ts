@@ -40,14 +40,11 @@ export type JSONReportTest = {
 export type EmptyTest = {testName: string; fileName?: string; details?: TestDetails};
 export type EmptyTestsYaml = Array<EmptyTest>;
 
-export type EmptyTestsMap = Record<string, EmptyTest[]>;
-
 export type CliOptions = {
     upload: string;
 };
 
 export type ProjectData = {
-    jsonReportPath: string;
     configPath: string;
     emptyTestsYamlPath?: string;
     rootPath?: string;

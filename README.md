@@ -16,17 +16,7 @@ npm install @spec-box/collector --save-dev
 yarn add @spec-box/collector --dev
 ```
 
-## Использование
-
-```bash
-# сбор тест кейсов
-npx spec-collector
-
-# сбор тест кейсов с выгрузкой в spec-box
-npx spec-collector -u
-```
-
-### Конфигурация
+## Конфигурация
 
 Создайте файл конфигурации `spec-collector.config.js`, `.spec-collectorrc`, `.spec-collectorrc.json`, `.spec-collectorrc.yaml`, `.spec-collectorrc.yml`, `.spec-collectorrc.js`, в корне вашего проекта.
 
@@ -36,7 +26,7 @@ npx spec-collector -u
 module.exports = {
   projects: [
     {
-      jsonReportPath: './test-results/report.json',
+      configPath: './tests/integration-tests/playwright.config.ts',
     },
   ],
   // host и specBoxProject нужны только для выгрузки
@@ -63,12 +53,37 @@ module.exports = {
       rootPath: './my-test-dir',
     },
   ],
+  formatTitle: {
+    remove: ['.common'],
+    replace: [
+      ['.int', ' [unternal]'],
+      ['.external', ' [b2b]'],
+    ],
+  },
   ignoreFiles: ['setup'],
   levels: 3,
   outputFile: './spec-collector-result.json',
   host: 'https://your-spec-box-server.com',
   specBoxProject: 'your-project-name',
 };
+```
+
+## Использование
+
+Для корректной работе инструмента нужно чтобы запуск playwright тестов в list режиме отрабатывал без ошибок. Проверить можно выполнив
+
+```bash
+npx playwright test --list
+```
+
+Запускать через cli так
+
+```bash
+# сбор тест кейсов
+npx spec-collector
+
+# сбор тест кейсов с выгрузкой в spec-box
+npx spec-collector -u
 ```
 
 ### Работа со сценариями

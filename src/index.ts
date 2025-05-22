@@ -33,9 +33,9 @@ export async function collectSuite(
     for (const project of projects) {
         const {configPath} = project;
         console.info('Generate report for', configPath);
-        generateReport(configPath);
+        const report = generateReport(configPath);
 
-        collector.loadData(project);
+        collector.loadData(report, project);
     }
 
     console.info('Building spec from reports');
