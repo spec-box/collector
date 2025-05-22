@@ -32,7 +32,7 @@ class EmptyTestCollector {
             ...options,
         };
 
-        console.info('EmptyTestCollector will collect epmty tests to', resolve(this.options.file));
+        console.info('EmptyTestCollector will collect empty tests to', resolve(this.options.file));
 
         if (this.options.clearAtStart && existsSync(this.options.file)) {
             unlinkSync(this.options.file);

@@ -53,11 +53,16 @@ export type ProjectData = {
     rootPath?: string;
 };
 
+export type FormatOptions = {
+    remove: string[];
+    replace: [string, string][];
+};
+
 export type Settings = {
     projects: Array<ProjectData>;
     ignoreFiles?: string[];
-
     levels?: number;
+    formatTitle: FormatOptions;
     specBoxProject?: string;
     host?: string;
     outputFile?: string;

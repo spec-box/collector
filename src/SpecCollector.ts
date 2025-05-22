@@ -3,9 +3,10 @@ import {parse as parsePath, relative} from 'node:path';
 
 import {parse as parseYaml} from 'yaml';
 
-import type {
+import {
     EmptyTest,
     EmptyTestsYaml,
+    FormatOptions,
     JSONReport,
     JSONReportSpec,
     JSONReportSuite,
@@ -16,6 +17,7 @@ import type {
 type Options = {
     pathFilter?: PathFilter;
     levels?: number;
+    formatTitleParams?: FormatOptions;
 };
 
 type PlaywrightSpecData = JSONReportSpec & {
@@ -150,11 +152,27 @@ export class SpecCollector {
     };
 
     formatFilename = (fileName: string) => {
-        const elementsToRemove = ['.e2e', '.integration', '.test', '.ts$', '.tsx$'];
+        const elementsToRemove = [
+            '.e2e',
+            '.integration',
+            '.test',
+            '.ts$',
+            '.tsx$',
+            ...(this.options.formatTitleParams?.remove ?? []),
+        ];
 
-        const regExp = new RegExp(elementsToRemove.join('|'), 'g');
+        const removeRegExp = new RegExp(elementsToRemove.join('|'), 'g');
 
-        return this.formatPathElement(fileName.replaceAll(regExp, ''));
+        let nameWithRemovedParts = fileName.replaceAll(removeRegExp, '');
+
+        if (this.options.formatTitleParams?.replace) {
+            for (const [find, replace] of this.options.formatTitleParams.replace) {
+                const replaceRegExp = new RegExp(find, 'g');
+                nameWithRemovedParts = nameWithRemovedParts.replaceAll(replaceRegExp, replace);
+            }
+        }
+
+        return this.formatPathElement(nameWithRemovedParts);
     };
 
     getFeatureAttributes = (path: string) => {

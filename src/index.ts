@@ -17,7 +17,7 @@ export async function collectSuite(
 ): Promise<void> {
     console.info('Starting with settings', settings);
 
-    const {projects, ignoreFiles, levels, outputFile, host, specBoxProject} = {
+    const {projects, ignoreFiles, levels, outputFile, host, specBoxProject, formatTitle} = {
         ...defaultSettings,
         ...settings,
     };
@@ -27,6 +27,7 @@ export async function collectSuite(
         levels: levels,
         pathFilter: (path) =>
             ignoreFiles.every((ignoredPath: string) => !path.includes(ignoredPath)),
+        formatTitleParams: formatTitle,
     });
 
     for (const project of projects) {
