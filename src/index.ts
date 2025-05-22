@@ -8,7 +8,6 @@ const defaultSettings = {
     ignoreFiles: [] as string[],
     emptyTestsYamlPath: './specBoxTests.yml',
     levels: 3,
-    configPath: './playwright.config.ts',
     outputFile: './spec-collector-result.json',
 };
 
@@ -18,31 +17,25 @@ export async function collectSuite(
 ): Promise<void> {
     console.info('Starting with settings', settings);
 
-    const {
-        jsonReportPath,
-        configPath,
-        ignoreFiles,
-        emptyTestsYamlPath,
-        levels,
-        outputFile,
-        host,
-        project,
-    } = {
+    const {projects, ignoreFiles, levels, outputFile, host, specBoxProject} = {
         ...defaultSettings,
         ...settings,
     };
 
-    console.info('Generating playwright report');
-    generateReport(configPath);
-
     console.info('Building spec-box suite');
     const collector = new SpecCollector({
-        reportPath: jsonReportPath,
-        emptyTestsYamlPath,
         levels: levels,
         pathFilter: (path) =>
             ignoreFiles.every((ignoredPath: string) => !path.includes(ignoredPath)),
     });
+
+    for (const project of projects) {
+        const {configPath, jsonReportPath, emptyTestsYamlPath} = project;
+        console.info('Generate report for', configPath);
+        generateReport(configPath);
+
+        collector.loadData(jsonReportPath, emptyTestsYamlPath);
+    }
 
     const specs = await collector.buildSpec();
 
@@ -52,16 +45,17 @@ export async function collectSuite(
         return;
     }
 
-    if (!host || !project) {
-        console.error('Specify host and project for upload specs');
+    if (!host || !specBoxProject) {
+        console.error('Specify host and specBoxProject in config for upload specs');
         return;
     }
 
     console.info('Uploading suite to host', host);
     await uploadEntities(specs, {
         host,
-        project,
+        project: specBoxProject,
     });
+    console.info('Success!');
 }
 
 export * from './EmptyTestCollector';

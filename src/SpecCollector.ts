@@ -4,7 +4,7 @@ import {parse as parsePath} from 'node:path';
 import {parse as parseYaml} from 'yaml';
 
 import type {
-    EmptyTestsMap,
+    EmptyTest,
     EmptyTestsYaml,
     JSONReport,
     JSONReportSpec,
@@ -13,9 +13,7 @@ import type {
 } from './typings';
 
 type Options = {
-    reportPath: string;
     pathFilter?: PathFilter;
-    emptyTestsYamlPath: string;
     levels?: number;
 };
 
@@ -27,25 +25,32 @@ export class SpecCollector {
     options: Options;
 
     pwTestMap: Record<string, PlaywrightSpecData[]>;
-    emptyTestMap: EmptyTestsMap;
+    emptyTestMap: Record<string, EmptyTest[]>;
 
     structureTags: Array<Set<string>> = [];
 
     constructor(options: Options) {
         this.options = options;
 
-        this.pwTestMap = this.getPwTestMap(
-            JSON.parse(readFileSync(options.reportPath, 'utf8')) as JSONReport,
-        );
+        this.pwTestMap = {};
 
-        this.emptyTestMap = existsSync(options.emptyTestsYamlPath)
-            ? this.getEmptyTestMap(
-                  parseYaml(readFileSync(options.emptyTestsYamlPath, 'utf8')) as EmptyTestsYaml,
-              )
-            : {};
+        this.emptyTestMap = {};
 
         this.initTagMap();
     }
+
+    loadData = (reportPath: string, emptyTestsYamlPath = './specBoxTests.yml') => {
+        const report = JSON.parse(readFileSync(reportPath, 'utf8')) as JSONReport;
+        this.loadPlaywrightTestMap(report);
+
+        if (existsSync(emptyTestsYamlPath)) {
+            const emptyTestsReport = parseYaml(
+                readFileSync(emptyTestsYamlPath, 'utf8'),
+            ) as EmptyTestsYaml;
+
+            this.loadEmptyTestMap(emptyTestsReport);
+        }
+    };
 
     buildSpec = async () => {
         const allPaths = new Set<string>();
@@ -222,25 +227,20 @@ export class SpecCollector {
         ];
     };
 
-    getEmptyTestMap = (tests: EmptyTestsYaml) => {
-        const fileMap: EmptyTestsMap = {};
-
+    loadEmptyTestMap = (tests: EmptyTestsYaml) => {
         for (const test of tests) {
             const fileName = test.fileName ?? '';
 
-            if (!fileMap[fileName]) {
-                fileMap[fileName] = [];
+            if (!this.emptyTestMap[fileName]) {
+                this.emptyTestMap[fileName] = [];
             }
 
-            fileMap[fileName]?.push(test);
+            this.emptyTestMap[fileName]?.push(test);
         }
-
-        return fileMap;
     };
 
-    getPwTestMap(report: JSONReport) {
+    loadPlaywrightTestMap(report: JSONReport) {
         const DELIMITER = ' \u203A ';
-        const specMap = {} as Record<string, PlaywrightSpecData[]>;
 
         const suitesStack = [report.suites];
 
@@ -255,7 +255,7 @@ export class SpecCollector {
                 const suiteName = this.getSuiteName(suite);
 
                 for (const spec of suite.specs) {
-                    const targetSpec = specMap[spec.file];
+                    const targetSpec = this.pwTestMap[spec.file];
 
                     const suiteNameWithDelimiter = suiteName ? `${suiteName}${DELIMITER}` : '';
                     const currentSpecData = {
@@ -266,7 +266,7 @@ export class SpecCollector {
                     if (targetSpec) {
                         targetSpec.push(currentSpecData);
                     } else {
-                        specMap[spec.file] = [currentSpecData];
+                        this.pwTestMap[spec.file] = [currentSpecData];
                     }
                 }
 
@@ -275,8 +275,6 @@ export class SpecCollector {
                 }
             }
         }
-
-        return specMap;
     }
 
     getSuiteName = (suite: JSONReportSuite) => {

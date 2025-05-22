@@ -46,13 +46,18 @@ export type CliOptions = {
     upload: string;
 };
 
-export type Settings = {
-    ignoreFiles?: string[];
+export type ProjectData = {
     jsonReportPath: string;
-    configPath?: string;
+    configPath: string;
     emptyTestsYamlPath?: string;
+};
+
+export type Settings = {
+    projects: Array<ProjectData>;
+    ignoreFiles?: string[];
+
     levels?: number;
-    project?: string;
+    specBoxProject?: string;
     host?: string;
     outputFile?: string;
 };
