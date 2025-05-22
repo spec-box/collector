@@ -43,22 +43,16 @@ export type EmptyTestsYaml = Array<EmptyTest>;
 export type EmptyTestsMap = Record<string, EmptyTest[]>;
 
 export type CliOptions = {
-    report: string;
-    config: string;
-    filter: string;
-    levels: string;
     upload: string;
-    host: string;
-    project: string;
 };
 
 export type Settings = {
     ignoreFiles?: string[];
-    jsonReportPath?: string;
+    jsonReportPath: string;
     configPath?: string;
     emptyTestsYamlPath?: string;
     levels?: number;
     project?: string;
     host?: string;
-    shouldUpload?: boolean;
+    outputFile?: string;
 };

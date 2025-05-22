@@ -34,8 +34,6 @@ export class SpecCollector {
     constructor(options: Options) {
         this.options = options;
 
-        console.log('options1', options);
-
         this.pwTestMap = this.getPwTestMap(
             JSON.parse(readFileSync(options.reportPath, 'utf8')) as JSONReport,
         );

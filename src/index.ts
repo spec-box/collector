@@ -1,26 +1,22 @@
-import {Settings} from './typings';
+import {CliOptions, Settings} from './typings';
 import {SpecCollector} from './SpecCollector';
 import {generateReport} from './generateReport';
 import {uploadEntities} from '@spec-box/sync/dist/lib/upload/upload-entities';
-
-const {cosmiconfig} = require('cosmiconfig');
+import {writeFileSync} from 'node:fs';
 
 const defaultSettings = {
     ignoreFiles: [] as string[],
     emptyTestsYamlPath: './specBoxTests.yml',
     levels: 3,
+    configPath: './playwright.config.ts',
+    outputFile: './spec-collector-result.json',
 };
 
-export async function collectSuite(settings: Settings) {
-    const explorer = cosmiconfig('spec-collector');
-    const {config: settingsFromConfig} = await explorer.search();
-
-    const mergedSettings = {
-        ...defaultSettings,
-        ...settingsFromConfig,
-        ...settings,
-    };
-    console.info('Starting with settings', mergedSettings);
+export async function collectSuite(
+    settings: Settings,
+    options: Partial<CliOptions>,
+): Promise<void> {
+    console.info('Starting with settings', settings);
 
     const {
         jsonReportPath,
@@ -28,10 +24,13 @@ export async function collectSuite(settings: Settings) {
         ignoreFiles,
         emptyTestsYamlPath,
         levels,
-        shouldUpload,
+        outputFile,
         host,
         project,
-    } = mergedSettings;
+    } = {
+        ...defaultSettings,
+        ...settings,
+    };
 
     console.info('Generating playwright report');
     generateReport(configPath);
@@ -47,9 +46,9 @@ export async function collectSuite(settings: Settings) {
 
     const specs = await collector.buildSpec();
 
-    if (!shouldUpload) {
-        console.log('Spec generated');
-        console.log(JSON.stringify(specs, null, 4));
+    if (!options.upload) {
+        console.info('Spec generated. Saving to', outputFile);
+        writeFileSync(outputFile, JSON.stringify(specs, null, 4));
         return;
     }
 
