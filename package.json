@@ -22,7 +22,7 @@
     "prepare": "husky",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "build": "tsc",
     "start": "TS_NODE_PROJECT=.storybook/tsconfig.json storybook dev",
     "prepublishOnly": "npm run build"
