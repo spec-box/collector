@@ -110,7 +110,6 @@ export class SpecCollector {
         };
     };
 
-    // build methods
     private getFeatureCode = (path: string) => {
         return path.replaceAll('/', '_');
     };
@@ -187,6 +186,7 @@ export class SpecCollector {
 
             for (const suite of suites) {
                 const suiteName = this.getSuiteName(suite);
+                const shouldAddSuiteName = suiteName && suites.length > 1;
 
                 for (const spec of suite.specs) {
                     const filePath = relative(rootPath, spec.file);
@@ -194,9 +194,12 @@ export class SpecCollector {
                     const targetSpec = this.pwTestMap[filePath];
 
                     const parentSuites = suite.parentSuites ?? [];
+
                     const currentSpecData: JSONReportSpec = {
                         ...spec,
-                        parentSuites: suiteName ? [...parentSuites, suiteName] : parentSuites,
+                        parentSuites: shouldAddSuiteName
+                            ? [...parentSuites, suiteName]
+                            : parentSuites,
                     };
 
                     if (targetSpec) {
@@ -213,7 +216,7 @@ export class SpecCollector {
                         suite.suites.map((currentSuite) => {
                             return {
                                 ...currentSuite,
-                                parentSuites: suiteName
+                                parentSuites: shouldAddSuiteName
                                     ? [...parentSuites, suiteName]
                                     : parentSuites,
                             };
