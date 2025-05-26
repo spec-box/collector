@@ -80,6 +80,7 @@ class EmptyTestCollector {
 const collector = new EmptyTestCollector();
 
 export const extendTest = <T>(test: T) => {
+    // eslint-disable-next-line no-param-reassign
     (test as T & TestSpecOptions).empty = collector.emptyTest;
 
     return test as T & TestSpecOptions;

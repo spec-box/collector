@@ -20,9 +20,7 @@
   "homepage": "https://github.com/gravity-ui/package-example#readme",
   "scripts": {
     "prepare": "husky",
-    "lint:js": "eslint --ext .js,.jsx,.ts,.tsx .",
-    "lint:styles": "stylelint 'src/**/*.scss'",
-    "lint": "run-p lint:*",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "build": "tsc",
@@ -30,6 +28,7 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
+    "@babel/preset-typescript": "^7.27.1",
     "@commitlint/cli": "^19.0.3",
     "@commitlint/config-conventional": "^19.0.3",
     "@gravity-ui/eslint-config": "^3.1.1",
@@ -44,7 +43,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.2",
-    "typescript": "^5.4.2"
+    "typescript": "^5.3.3"
   },
   "nano-staged": {
     "*.{js,ts}": [
