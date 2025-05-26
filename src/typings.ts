@@ -4,19 +4,24 @@ export type PathFilter = (path: string) => boolean;
 
 export type JSONReport = {
     config: never;
-    suites: JSONReportSuite[];
+    suites: JSONReportSuitePlaywright[];
     errors: TestError[];
 };
-export type JSONReportSuite = {
+
+export type JSONReportSuitePlaywright = {
     title: string;
     file: string;
     column: number;
     line: number;
-    specs: JSONReportSpec[];
+    specs: JSONReportSpecPlaywright[];
     suites?: JSONReportSuite[];
 };
 
-export type JSONReportSpec = {
+export type JSONReportSuite = JSONReportSuitePlaywright & {
+    parentSuites?: string[];
+};
+
+export type JSONReportSpecPlaywright = {
     tags: string[];
     title: string;
     ok: boolean;
@@ -25,6 +30,10 @@ export type JSONReportSpec = {
     file: string;
     line: number;
     column: number;
+};
+
+export type JSONReportSpec = JSONReportSpecPlaywright & {
+    parentSuites: string[];
 };
 
 export type JSONReportTest = {
@@ -40,8 +49,17 @@ export type JSONReportTest = {
 export type EmptyTest = {testName: string; fileName?: string; details?: TestDetails};
 export type EmptyTestsYaml = Array<EmptyTest>;
 
+// Collector typings
+export type CollectorOptions = {
+    pathFilter?: PathFilter;
+    levels?: number;
+    formatTitleParams?: FormatOptions;
+};
+
+// Runner typings
 export type CliOptions = {
     upload: string;
+    verbose?: boolean;
 };
 
 export type ProjectData = {

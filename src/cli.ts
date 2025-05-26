@@ -5,6 +5,7 @@ import {version} from '../package.json';
 import {collectSuite} from './index';
 import {CliOptions, Settings} from './typings';
 import {cosmiconfig} from 'cosmiconfig';
+import {createLogger} from './logger';
 
 const program = new Command();
 
@@ -15,11 +16,14 @@ program
 
 program
     .option('-u, --upload', 'Upload files to spec-box server')
+    .option('--verbose', 'Enable verbose logging')
     .action(async (cliOptions: Partial<CliOptions>) => {
         const explorer = cosmiconfig('spec-collector');
         const config = ((await explorer.search())?.config ?? {}) as Settings;
 
-        await collectSuite(config, cliOptions);
+        const logger = createLogger(cliOptions.verbose ? 'debug' : 'info');
+
+        await collectSuite(config, cliOptions, logger);
     });
 
 program.parse();

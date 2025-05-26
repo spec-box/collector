@@ -32,6 +32,7 @@ class EmptyTestCollector {
             ...options,
         };
 
+        /* eslint-disable-next-line no-console */
         console.info('EmptyTestCollector will collect empty tests to', resolve(this.options.file));
 
         if (this.options.clearAtStart && existsSync(this.options.file)) {
@@ -44,6 +45,7 @@ class EmptyTestCollector {
         const relativeFilename = fileName ? relative(process.cwd(), fileName) : undefined;
         const item = this.stringifyTest(testName, relativeFilename, details);
 
+        /* eslint-disable-next-line no-console */
         console.info(item);
         this.saveTest(item);
     };

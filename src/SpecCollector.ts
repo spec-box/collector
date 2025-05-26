@@ -4,35 +4,25 @@ import {parse as parsePath, relative} from 'node:path';
 import {parse as parseYaml} from 'yaml';
 
 import {
+    CollectorOptions,
     EmptyTest,
     EmptyTestsYaml,
-    FormatOptions,
     JSONReport,
     JSONReportSpec,
     JSONReportSuite,
-    PathFilter,
     ProjectData,
 } from './typings';
-
-type Options = {
-    pathFilter?: PathFilter;
-    levels?: number;
-    formatTitleParams?: FormatOptions;
-};
-
-type PlaywrightSpecData = JSONReportSpec & {
-    suiteTitle: string;
-};
+import {DefaultStrategy} from './strategy';
 
 export class SpecCollector {
-    options: Options;
+    options: CollectorOptions;
 
-    pwTestMap: Record<string, PlaywrightSpecData[]>;
+    pwTestMap: Record<string, JSONReportSpec[]>;
     emptyTestMap: Record<string, EmptyTest[]>;
 
     structureTags: Array<Set<string>> = [];
 
-    constructor(options: Options) {
+    constructor(options: CollectorOptions) {
         this.options = options;
 
         this.pwTestMap = {};
@@ -69,39 +59,42 @@ export class SpecCollector {
         for (const key of Object.keys(this.pwTestMap)) allPaths.add(key);
         for (const key of Object.keys(this.emptyTestMap)) allPaths.add(key);
 
-        const features = [];
+        const collectStrategy = new DefaultStrategy(this.options);
 
-        // FIXME добавить возможность загрузки скипнутых тестов
-        const skipTitles = new Set<string>();
+        const features = [];
 
         for (const path of allPaths) {
             if (this.options.pathFilter && !this.options.pathFilter(path)) {
                 continue;
             }
 
-            const emptyTestsAssertion = this.loadEmptyTestAssertion(path);
-            const pwTestsAssertion = this.loadPwTestFromAssertion(path, skipTitles);
+            const emptyTests = this.emptyTestMap[path] ?? [];
+            const tests = this.pwTestMap[path] ?? [];
 
-            const noAssertion = emptyTestsAssertion.length === 0 && pwTestsAssertion.length === 0;
-            if (noAssertion) {
+            const strategyOptions = {path, emptyTests, tests};
+
+            const groups = collectStrategy.getGroups(strategyOptions);
+            const title = collectStrategy.getFeatureTitle(strategyOptions);
+            const structureAttributes = collectStrategy.getAttributes(strategyOptions);
+
+            const hasAssertions =
+                groups.length > 0 && groups.some((group) => group.assertions.length > 0);
+
+            if (!hasAssertions) {
                 continue;
             }
 
-            this.loadAttributesForPath(path);
+            this.loadAttributes(structureAttributes);
+
+            this.loadAttributes(structureAttributes);
 
             const feature = {
+                title,
+                groups,
+
                 code: this.getFeatureCode(path),
-                title: this.getFeatureTitle(path),
-
-                groups: [
-                    {
-                        title: this.getFeatureTitle(path),
-                        assertions: [...pwTestsAssertion, ...emptyTestsAssertion],
-                    },
-                ],
-                attributes: this.getFeatureAttributes(path),
+                attributes: this.wrapFeatureAttributes(structureAttributes),
                 dependencies: [],
-
                 fileName: this.getFeatureFilename(path),
                 filePath: path + '.yml',
             };
@@ -118,65 +111,17 @@ export class SpecCollector {
     };
 
     // build methods
-    getFeatureCode = (path: string) => {
+    private getFeatureCode = (path: string) => {
         return path.replaceAll('/', '_');
     };
 
-    getFeatureTitle = (path: string) => {
-        const {name} = parsePath(path);
-
-        return this.formatFilename(name);
-    };
-
-    getFeatureFilename = (path: string) => {
+    private getFeatureFilename = (path: string) => {
         const {name} = parsePath(path);
 
         return name;
     };
 
-    formatPathElement = (attribute: string) => {
-        const attributeWithoutDash = attribute.replaceAll('-', ' ');
-
-        return attributeWithoutDash[0]?.toUpperCase() + attributeWithoutDash.slice(1);
-    };
-
-    getAttributesFromPath = (path: string) => {
-        const {dir, name} = parsePath(path);
-        const pathArray = dir.split('/');
-
-        const editedFileName = this.formatFilename(name);
-        const attributes = [...pathArray, editedFileName].filter(Boolean) as string[];
-
-        return attributes.slice(0, this.options.levels || 3).map(this.formatPathElement);
-    };
-
-    formatFilename = (fileName: string) => {
-        const elementsToRemove = [
-            '.e2e',
-            '.integration',
-            '.test',
-            '.ts$',
-            '.tsx$',
-            ...(this.options.formatTitleParams?.remove ?? []),
-        ];
-
-        const removeRegExp = new RegExp(elementsToRemove.join('|'), 'g');
-
-        let nameWithRemovedParts = fileName.replaceAll(removeRegExp, '');
-
-        if (this.options.formatTitleParams?.replace) {
-            for (const [find, replace] of this.options.formatTitleParams.replace) {
-                const replaceRegExp = new RegExp(find, 'g');
-                nameWithRemovedParts = nameWithRemovedParts.replaceAll(replaceRegExp, replace);
-            }
-        }
-
-        return this.formatPathElement(nameWithRemovedParts);
-    };
-
-    getFeatureAttributes = (path: string) => {
-        const attributes = this.getAttributesFromPath(path);
-
+    private wrapFeatureAttributes = (attributes: string[]) => {
         const result: Record<string, string[]> = {};
 
         for (const [index, attributeValue] of attributes.entries()) {
@@ -186,53 +131,17 @@ export class SpecCollector {
         return result;
     };
 
-    loadAttributesForPath = (path: string) => {
-        const attributes = this.getAttributesFromPath(path);
-
+    private loadAttributes = (attributes: string[]) => {
         for (const [index, value] of attributes.entries()) {
             this.structureTags[index]?.add(value);
         }
     };
 
-    loadPwTestFromAssertion = (path: string, skips: Set<string>) => {
-        const pwTestsForPath = this.pwTestMap[path];
-
-        if (!pwTestsForPath) {
-            return [];
-        }
-
-        return pwTestsForPath.map((spec) => {
-            const expectedStatus = spec.tests[0]?.expectedStatus ?? 'passed';
-            const isEnabledInCode = expectedStatus === 'passed';
-            const isEnabledInTestcop = !skips.has(spec.suiteTitle);
-
-            const isTestEnabled = isEnabledInCode && isEnabledInTestcop;
-
-            return {
-                title: spec.suiteTitle,
-                automationState: isTestEnabled ? ('Automated' as const) : ('Unknown' as const),
-            };
-        });
-    };
-
-    loadEmptyTestAssertion = (path: string) => {
-        const emptyTestsForPath = this.emptyTestMap[path];
-
-        if (!emptyTestsForPath) {
-            return [];
-        }
-
-        return emptyTestsForPath.map((test) => ({
-            title: test.testName,
-            automationState: 'Unknown' as const,
-        }));
-    };
-
-    initTagMap = () => {
+    private initTagMap = () => {
         this.structureTags = Array.from({length: this.options.levels ?? 3}).map(() => new Set());
     };
 
-    getProjectAttributes = () => {
+    private getProjectAttributes = () => {
         return this.structureTags.map((tags, index) => {
             return {
                 title: `lvl${index}`,
@@ -244,7 +153,7 @@ export class SpecCollector {
         });
     };
 
-    getProjectTrees = () => {
+    private getProjectTrees = () => {
         return [
             {
                 title: 'Some tree',
@@ -254,7 +163,7 @@ export class SpecCollector {
         ];
     };
 
-    loadEmptyTestMap = (tests: EmptyTestsYaml) => {
+    private loadEmptyTestMap = (tests: EmptyTestsYaml) => {
         for (const test of tests) {
             const fileName = test.fileName ?? '';
 
@@ -266,13 +175,11 @@ export class SpecCollector {
         }
     };
 
-    loadPlaywrightTestMap(report: JSONReport, rootPath: string) {
-        const DELIMITER = ' \u203A ';
-
+    private loadPlaywrightTestMap(report: JSONReport, rootPath: string) {
         const suitesStack = [report.suites];
 
         while (suitesStack.length !== 0) {
-            const suites = suitesStack.pop();
+            const suites: JSONReportSuite[] | undefined = suitesStack.pop();
 
             if (!suites) {
                 continue;
@@ -286,10 +193,10 @@ export class SpecCollector {
 
                     const targetSpec = this.pwTestMap[filePath];
 
-                    const suiteNameWithDelimiter = suiteName ? `${suiteName}${DELIMITER}` : '';
-                    const currentSpecData = {
+                    const parentSuites = suite.parentSuites ?? [];
+                    const currentSpecData: JSONReportSpec = {
                         ...spec,
-                        suiteTitle: `${suiteNameWithDelimiter}${spec.title}`,
+                        parentSuites: suiteName ? [...parentSuites, suiteName] : parentSuites,
                     };
 
                     if (targetSpec) {
@@ -300,13 +207,24 @@ export class SpecCollector {
                 }
 
                 if (suite.suites) {
-                    suitesStack.push(suite.suites);
+                    const parentSuites = suite.parentSuites ?? [];
+
+                    suitesStack.push(
+                        suite.suites.map((currentSuite) => {
+                            return {
+                                ...currentSuite,
+                                parentSuites: suiteName
+                                    ? [...parentSuites, suiteName]
+                                    : parentSuites,
+                            };
+                        }),
+                    );
                 }
             }
         }
     }
 
-    getSuiteName = (suite: JSONReportSuite) => {
+    private getSuiteName = (suite: JSONReportSuite) => {
         const suiteHasNoTitle = !suite.title || suite.title === suite.file;
 
         return suiteHasNoTitle ? '' : suite.title;

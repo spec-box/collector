@@ -1,8 +1,10 @@
+import {writeFileSync} from 'node:fs';
+import {uploadEntities} from '@spec-box/sync/dist/lib/upload/upload-entities';
+
 import {CliOptions, Settings} from './typings';
 import {SpecCollector} from './SpecCollector';
 import {generateReport} from './generateReport';
-import {uploadEntities} from '@spec-box/sync/dist/lib/upload/upload-entities';
-import {writeFileSync} from 'node:fs';
+import {Logger} from './logger';
 
 const defaultSettings = {
     ignoreFiles: [] as string[],
@@ -14,15 +16,16 @@ const defaultSettings = {
 export async function collectSuite(
     settings: Settings,
     options: Partial<CliOptions>,
+    logger: Logger,
 ): Promise<void> {
-    console.info('Starting with settings', settings);
+    logger.info('Starting with settings', settings);
 
     const {projects, ignoreFiles, levels, outputFile, host, specBoxProject, formatTitle} = {
         ...defaultSettings,
         ...settings,
     };
 
-    console.info('Building spec-box suite');
+    logger.info('Building spec-box suite');
     const collector = new SpecCollector({
         levels: levels,
         pathFilter: (path) =>
@@ -32,32 +35,32 @@ export async function collectSuite(
 
     for (const project of projects) {
         const {configPath} = project;
-        console.info('Generate report for', configPath);
+        logger.info('Generate report for', configPath);
         const report = generateReport(configPath);
 
         collector.loadData(report, project);
     }
 
-    console.info('Building spec from reports');
+    logger.info('Building spec from reports');
     const specs = await collector.buildSpec();
 
     if (!options.upload) {
-        console.info('Spec generated. Saving to', outputFile);
+        logger.info('Spec generated. Saving to', outputFile);
         writeFileSync(outputFile, JSON.stringify(specs, null, 4));
         return;
     }
 
     if (!host || !specBoxProject) {
-        console.error('Specify host and specBoxProject in config for upload specs');
+        logger.error('Specify host and specBoxProject in config for upload specs');
         return;
     }
 
-    console.info('Uploading suite to host', host);
+    logger.info('Uploading suite to host', host);
     await uploadEntities(specs, {
         host,
         project: specBoxProject,
     });
-    console.info('Success!');
+    logger.info('Success!');
 }
 
 export * from './EmptyTestCollector';
