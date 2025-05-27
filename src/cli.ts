@@ -18,10 +18,18 @@ program
     .option('-u, --upload', 'Upload files to spec-box server')
     .option('--verbose', 'Enable verbose logging')
     .action(async (cliOptions: Partial<CliOptions>) => {
-        const explorer = cosmiconfig('spec-collector');
-        const config = ((await explorer.search())?.config ?? {}) as Settings;
-
         const logger = createLogger(cliOptions.verbose ? 'debug' : 'info');
+        const explorer = cosmiconfig('spec-collector');
+        const searchConfigResult = await explorer.search();
+
+        if (!searchConfigResult) {
+            logger.error(
+                'Config file not found. Create config file https://github.com/spec-box/collector?tab=readme-ov-file#конфигурация',
+            );
+            process.exit(1);
+        }
+
+        const config = (searchConfigResult?.config ?? {}) as Settings;
 
         await collectSuite(config, cliOptions, logger);
     });
