@@ -1,6 +1,7 @@
 {
   "name": "@spec-box/collector",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "private": false,
   "description": "",
   "license": "MIT",
   "main": "dist/index.js",
@@ -12,10 +13,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gravity-ui/package-example.git"
+    "url": "git+https://github.com/spec-box/collector.git"
   },
   "bugs": {
-    "url": "https://github.com/gravity-ui/package-example/issues"
+    "url": "https://github.com/spec-box/collector/issues"
   },
   "homepage": "https://github.com/gravity-ui/package-example#readme",
   "scripts": {
@@ -25,7 +26,9 @@
     "test": "jest --passWithNoTests",
     "build": "tsc",
     "start": "TS_NODE_PROJECT=.storybook/tsconfig.json storybook dev",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "version-beta": "npm version prerelease --preid beta",
+    "publish-beta": "npm publish --tag beta"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.27.1",
