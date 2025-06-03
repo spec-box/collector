@@ -12,6 +12,7 @@ export function generateReport(configPath?: string) {
         cwd: process.cwd(),
         env: process.env,
         stdio: 'pipe',
+        maxBuffer: 100 * 1024 * 1024, // 100 Mb buffer size
     });
 
     return JSON.parse(result.stdout.toString()) as JSONReport;
