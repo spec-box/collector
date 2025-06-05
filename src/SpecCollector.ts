@@ -1,5 +1,6 @@
 import {existsSync, readFileSync} from 'node:fs';
 import {parse as parsePath, relative} from 'node:path';
+import {Feature} from '@spec-box/sync/dist/lib/domain';
 
 import {parse as parseYaml} from 'yaml';
 
@@ -13,6 +14,7 @@ import {
     ProjectData,
 } from './typings';
 import {DefaultStrategy} from './strategy';
+import {featureHasUniqueAssertions} from './validators';
 
 export class SpecCollector {
     options: CollectorOptions;
@@ -88,7 +90,7 @@ export class SpecCollector {
 
             this.loadAttributes(structureAttributes);
 
-            const feature = {
+            const feature: Feature = {
                 title,
                 groups,
 
@@ -98,6 +100,8 @@ export class SpecCollector {
                 fileName: this.getFeatureFilename(path),
                 filePath: path + '.yml',
             };
+
+            this.validateFeature(feature);
 
             features.push(feature);
         }
@@ -160,6 +164,13 @@ export class SpecCollector {
                 attributes: this.structureTags.map((_value, index) => `lvl${index}`),
             },
         ];
+    };
+
+    private validateFeature = (feature: Feature) => {
+        const {result, assertion} = featureHasUniqueAssertions(feature);
+        if (!result) {
+            throw new Error(`Feature '${feature.title}' has not unique assertions '${assertion}'`);
+        }
     };
 
     private loadEmptyTestMap = (tests: EmptyTestsYaml) => {
