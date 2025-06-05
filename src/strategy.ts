@@ -22,12 +22,23 @@ export class DefaultStrategy {
         const emptyTestsAssertion = this.loadEmptyTestAssertion(emptyTests);
         const pwTestsAssertion = this.loadPwTestFromAssertion(tests);
 
-        return [
-            {
+        const groups = [];
+
+        if (pwTestsAssertion.length > 0) {
+            groups.push({
                 title: this.getTitleFromPath(path),
-                assertions: [...pwTestsAssertion, ...emptyTestsAssertion],
-            },
-        ];
+                assertions: pwTestsAssertion,
+            });
+        }
+
+        if (emptyTestsAssertion.length > 0) {
+            groups.push({
+                title: `${this.getTitleFromPath(path)} - Empty Tests`,
+                assertions: emptyTestsAssertion,
+            });
+        }
+
+        return groups;
     };
 
     getAttributes = ({path}: StrategyOptions) => {
