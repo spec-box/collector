@@ -6,6 +6,7 @@ import {collectSuite} from './index';
 import {CliOptions, Settings} from './typings';
 import {cosmiconfig} from 'cosmiconfig';
 import {createLogger} from './logger';
+import {InitOptions, initCommand} from './initCommand';
 
 const program = new Command();
 
@@ -13,6 +14,15 @@ program
     .name('spec-collector')
     .description('Collect spec-box suite from code of your test files')
     .version(version);
+
+program
+    .command('init')
+    .description('Create a spec-collector configuration file')
+    .option('-f, --force', 'Overwrite existing config file')
+    .action(async (options: InitOptions) => {
+        const logger = createLogger('info');
+        await initCommand(options, logger);
+    });
 
 program
     .option('-u, --upload', 'Upload files to spec-box server')
@@ -26,6 +36,7 @@ program
             logger.error(
                 'Config file not found. Create config file https://github.com/spec-box/collector?tab=readme-ov-file#конфигурация',
             );
+            logger.info('You can create a default config file by running: spec-collector init');
             process.exit(1);
         }
 
