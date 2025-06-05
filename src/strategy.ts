@@ -15,6 +15,16 @@ export class DefaultStrategy {
     }
 
     getFeatureTitle = ({path}: StrategyOptions) => {
+        const attributes = this.parsePathToAttributes(path);
+        const levels = this.collectorOptions.levels || 3;
+
+        if (attributes.length > levels) {
+            const excludedElements = attributes.slice(levels, -1);
+            const fileName = attributes[attributes.length - 1];
+            const titleElements = [...excludedElements, fileName];
+            return titleElements.map(this.formatPathElement).join(' / ');
+        }
+
         return this.getTitleFromPath(path);
     };
 
@@ -42,12 +52,7 @@ export class DefaultStrategy {
     };
 
     getAttributes = ({path}: StrategyOptions) => {
-        const {dir, name} = parsePath(path);
-        const pathArray = dir.split('/');
-
-        const editedFileName = this.formatFilename(name);
-        const attributes = [...pathArray, editedFileName].filter(Boolean) as string[];
-
+        const attributes = this.parsePathToAttributes(path);
         return attributes.slice(0, this.collectorOptions.levels || 3).map(this.formatPathElement);
     };
 
@@ -113,5 +118,12 @@ export class DefaultStrategy {
         const attributeWithoutDash = attribute.replaceAll('-', ' ');
 
         return attributeWithoutDash[0]?.toUpperCase() + attributeWithoutDash.slice(1);
+    };
+
+    private parsePathToAttributes = (path: string): string[] => {
+        const {dir, name} = parsePath(path);
+        const pathArray = dir.split('/');
+        const editedFileName = this.formatFilename(name);
+        return [...pathArray, editedFileName].filter(Boolean) as string[];
     };
 }
