@@ -1,5 +1,4 @@
 import {appendFileSync, existsSync, unlinkSync, writeFileSync} from 'node:fs';
-import {relative} from 'node:path';
 
 import type {TestDetails} from '@playwright/test';
 import {parse} from 'stacktrace-parser';
@@ -39,8 +38,11 @@ class EmptyTestCollector {
 
     emptyTest: EmptyTest = (testName, details) => {
         const fileName = this.getTestFilename();
-        const relativeFilename = fileName ? relative(process.cwd(), fileName) : undefined;
-        const item = this.stringifyTest(testName, relativeFilename, details);
+        if (!fileName) {
+            return;
+        }
+
+        const item = this.stringifyTest(testName, fileName, details);
 
         this.saveTest(item);
     };
@@ -57,7 +59,7 @@ class EmptyTestCollector {
         return errorStack[this.options.callLevel]?.file ?? undefined;
     };
 
-    stringifyTest = (testName: string, fileName?: string, details?: TestDetails) => {
+    stringifyTest = (testName: string, fileName: string, details?: TestDetails) => {
         return stringify([{testName, fileName, details}]);
     };
 

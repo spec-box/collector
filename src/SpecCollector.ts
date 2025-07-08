@@ -51,7 +51,7 @@ export class SpecCollector {
                 readFileSync(emptyTestsYamlPath, 'utf8'),
             ) as EmptyTestsYaml;
 
-            this.loadEmptyTestMap(emptyTestsReport);
+            this.loadEmptyTestMap(emptyTestsReport, playwrightReport.config.rootDir);
         }
     };
 
@@ -173,9 +173,9 @@ export class SpecCollector {
         }
     };
 
-    private loadEmptyTestMap = (tests: EmptyTestsYaml) => {
+    private loadEmptyTestMap = (tests: EmptyTestsYaml, rootDir: string) => {
         for (const test of tests) {
-            const fileName = test.fileName ?? '';
+            const fileName = relative(rootDir, test.fileName);
 
             if (!this.emptyTestMap[fileName]) {
                 this.emptyTestMap[fileName] = [];
