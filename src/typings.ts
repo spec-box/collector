@@ -3,7 +3,9 @@ import type {TestDetails} from '@playwright/test';
 export type PathFilter = (path: string) => boolean;
 
 export type JSONReport = {
-    config: never;
+    config: {
+        rootDir: string;
+    };
     suites: JSONReportSuitePlaywright[];
     errors: TestError[];
 };
@@ -46,7 +48,7 @@ export type JSONReportTest = {
     status: 'skipped' | 'expected' | 'unexpected' | 'flaky';
 };
 
-export type EmptyTest = {testName: string; fileName?: string; details?: TestDetails};
+export type EmptyTest = {testName: string; fileName: string; details?: TestDetails};
 export type EmptyTestsYaml = Array<EmptyTest>;
 
 // Collector typings
