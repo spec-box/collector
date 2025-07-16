@@ -36,7 +36,12 @@ export async function collectSuite(
     for (const project of projects) {
         const {configPath} = project;
         logger.info('Generate report for', configPath);
-        const report = generateReport(configPath);
+        const report = generateReport(logger, configPath);
+
+        if (report.errors) {
+            logger.error('Errors in report for project', project);
+            logger.error(report.errors);
+        }
 
         collector.loadData(report, project);
     }
