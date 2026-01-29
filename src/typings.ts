@@ -62,6 +62,7 @@ export type CollectorOptions = {
 export type CliOptions = {
     upload: string;
     verbose?: boolean;
+    config?: string;
 };
 
 export type ProjectData = {

@@ -96,12 +96,19 @@ npx spec-collector
 
 # сбор тест кейсов с выгрузкой в spec-box
 npx spec-collector -u
+
+# сбор тест кейсов с указанием пути к конфигурации
+npx spec-collector -c ./custom-config.js
+
+# сбор тест кейсов с указанием пути к конфигурации и выгрузкой в spec-box
+npx spec-collector -c ./custom-config.js -u
 ```
 
 ### Команды CLI
 
 - `npx spec-collector init` — создать файл конфигурации с настройками по умолчанию
 - `npx spec-collector init --force` — пересоздать файл конфигурации (перезаписать существующий)
+- `npx spec-collector -c, --config <path>` — указать путь к файлу конфигурации (если указан, конфиг ищется только по этому пути, иначе выбрасывается ошибка)
 - `npx spec-collector --help` — показать справку
 
 ### Работа со сценариями

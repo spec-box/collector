@@ -27,17 +27,32 @@ program
 program
     .option('-u, --upload', 'Upload files to spec-box server')
     .option('--verbose', 'Enable verbose logging')
+    .option('-c, --config <path>', 'Path to config file')
     .action(async (cliOptions: Partial<CliOptions>) => {
         const logger = createLogger(cliOptions.verbose ? 'debug' : 'info');
         const explorer = cosmiconfig('spec-collector');
-        const searchConfigResult = await explorer.search();
 
-        if (!searchConfigResult) {
-            logger.error(
-                'Config file not found. Create config file https://github.com/spec-box/collector?tab=readme-ov-file#конфигурация',
-            );
-            logger.info('You can create a default config file by running: spec-collector init');
-            process.exit(1);
+        let searchConfigResult;
+
+        if (cliOptions.config) {
+            // If config path is specified, load only from that path
+            searchConfigResult = await explorer.load(cliOptions.config);
+
+            if (!searchConfigResult) {
+                logger.error(`Config file not found at specified path: ${cliOptions.config}`);
+                process.exit(1);
+            }
+        } else {
+            // Otherwise, search for config file automatically
+            searchConfigResult = await explorer.search();
+
+            if (!searchConfigResult) {
+                logger.error(
+                    'Config file not found. Create config file https://github.com/spec-box/collector?tab=readme-ov-file#конфигурация',
+                );
+                logger.info('You can create a default config file by running: spec-collector init');
+                process.exit(1);
+            }
         }
 
         const config = (searchConfigResult?.config ?? {}) as Settings;
