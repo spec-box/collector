@@ -10,6 +10,10 @@ export type TestSpecOptions = {
     empty: EmptyTest;
 };
 
+export type ExtendTestOptions = {
+    collectToFile?: boolean;
+};
+
 type Options = {
     clearAtStart: boolean;
     file: string;
@@ -76,9 +80,11 @@ class EmptyTestCollector {
 
 const collector = new EmptyTestCollector();
 
-export const extendTest = <T>(test: T) => {
+export const extendTest = <T>(test: T, options: ExtendTestOptions = {}) => {
+    const collectToFile = options.collectToFile !== false;
+
     // eslint-disable-next-line no-param-reassign
-    (test as T & TestSpecOptions).empty = collector.emptyTest;
+    (test as T & TestSpecOptions).empty = collectToFile ? collector.emptyTest : () => undefined;
 
     return test as T & TestSpecOptions;
 };
