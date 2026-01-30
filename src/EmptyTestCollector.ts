@@ -28,16 +28,13 @@ const defaultOptions: Options = {
 
 class EmptyTestCollector {
     options: Options;
+    fileWasCleared = false;
 
     constructor(options: Partial<Options> = {}) {
         this.options = {
             ...defaultOptions,
             ...options,
         };
-
-        if (this.options.clearAtStart && existsSync(this.options.file)) {
-            unlinkSync(this.options.file);
-        }
     }
 
     emptyTest: EmptyTest = (testName, details) => {
@@ -70,11 +67,20 @@ class EmptyTestCollector {
     saveTest = (item: string) => {
         const {file} = this.options;
 
+        this.clearFileIfNeeded();
+
         if (!existsSync(file)) {
             writeFileSync(file, '', 'utf8');
         }
 
         appendFileSync(file, item, 'utf8');
+    };
+
+    clearFileIfNeeded = () => {
+        if (this.options.clearAtStart && !this.fileWasCleared && existsSync(this.options.file)) {
+            this.fileWasCleared = true;
+            unlinkSync(this.options.file);
+        }
     };
 }
 
